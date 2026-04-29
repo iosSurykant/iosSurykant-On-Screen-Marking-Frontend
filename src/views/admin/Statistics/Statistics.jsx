@@ -40,7 +40,7 @@ const Statistics = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="mb-2 text-4xl font-bold text-gray-800">
-            Rejected Booklets
+            Rejected Booklets Abhi
           </h1>
           <p className="text-gray-600">Overview of rejected booklet records</p>
         </div>

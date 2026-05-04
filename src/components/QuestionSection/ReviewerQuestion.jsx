@@ -528,7 +528,7 @@ const ReviewerQuestion = (props) => {
 
       // 🚨 TEMP DEBUG OVERRIDE (to confirm bug source)
       // 👉 comment this later after fix
-      if (latestIndex >= total - 1) {
+      if (latestIndex >= total) {
         console.log("🚨 DETECTED AS LAST — VERIFY IF CORRECT");
 
         // 👇 DEBUG: show user-visible index
@@ -599,6 +599,8 @@ const ReviewerQuestion = (props) => {
       // window.location.reload();
 
       toast.success("Moved to next booklet");
+
+      window.location.reload();
 
       console.log("🟢 ===== END handleNextBooklet =====");
     } catch (error) {

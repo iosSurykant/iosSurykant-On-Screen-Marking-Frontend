@@ -93,19 +93,49 @@ const annotationSlice = createSlice({
     },
 
     // ---------- Bulk Load ----------
+    // setAnnotationsAndCommentsAndMarks: (state, action) => {
+    //   state.annotationStore = (action.payload.annotationStore || []).map((a) => ({
+    //     ...a,
+    //     synced: true,
+    //   }));
+    //   state.commentStore = (action.payload.commentStore || []).map((c) => ({
+    //     ...c,
+    //     synced: true,
+    //   }));
+    //   state.marksStore = (action.payload.marksStore || []).map((m) => ({
+    //     ...m,
+    //     synced: true,
+    //   }));
+    // },
+
     setAnnotationsAndCommentsAndMarks: (state, action) => {
-      state.annotationStore = (action.payload.annotationStore || []).map((a) => ({
-        ...a,
-        synced: true,
-      }));
-      state.commentStore = (action.payload.commentStore || []).map((c) => ({
-        ...c,
-        synced: true,
-      }));
-      state.marksStore = (action.payload.marksStore || []).map((m) => ({
-        ...m,
-        synced: true,
-      }));
+      const incomingAnnotations = action.payload.annotationStore || [];
+      const incomingComments = action.payload.commentStore || [];
+      const incomingMarks = action.payload.marksStore || [];
+
+      // ✅ MERGE ANNOTATIONS
+      incomingAnnotations.forEach((newA) => {
+        const exists = state.annotationStore.find((a) => a.id === newA.id);
+        if (!exists) {
+          state.annotationStore.push({ ...newA, synced: true });
+        }
+      });
+
+      // ✅ MERGE COMMENTS
+      incomingComments.forEach((newC) => {
+        const exists = state.commentStore.find((c) => c.id === newC.id);
+        if (!exists) {
+          state.commentStore.push({ ...newC, synced: true });
+        }
+      });
+
+      // ✅ MERGE MARKS
+      incomingMarks.forEach((newM) => {
+        const exists = state.marksStore.find((m) => m.id === newM.id);
+        if (!exists) {
+          state.marksStore.push({ ...newM, synced: true });
+        }
+      });
     },
   },
 });

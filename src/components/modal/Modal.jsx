@@ -15,6 +15,7 @@ const Modal = ({ user, isOpen, setIsOpen }) => {
     subjectCode: [],
     maxBooklets: "",
     changepassword: "",
+    deputyHead: "",
   });
 
   const [subjectDetails, setSubjectDetails] = useState([]);
@@ -36,12 +37,15 @@ const Modal = ({ user, isOpen, setIsOpen }) => {
         subjectCode: user.subjectCode || [],
         maxBooklets: user.maxBooklets || "",
         changepassword: user.changepassword || "",
-        evaluators: user.evaluators || [], // ✅ ADD THIS
+        evaluators: user.evaluators || [],
+        deputyHead: user?.deputyHead, // ✅ ADD THIS
       });
 
       setSelectedEvaluators(user.evaluators || []); // ✅ IMPORTANT
     }
   }, [user]);
+
+  console.log(user, "USER");
 
   useEffect(() => {
     const fetchAllSubjectDetails = async () => {

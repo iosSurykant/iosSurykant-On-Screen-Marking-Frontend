@@ -201,6 +201,7 @@ const Index = () => {
       subjectCode: user?.subjectCode || [],
       evaluators: user?.evaluators || [],
       maxBooklets: user?.maxBooklets || 0,
+      deputyHead: user.deputyHead,
       subjectName: matchedUser?.subjectCode || [],
       evaluatorsName: matchedUser?.evaluators || [], // Use the subjectCode from userData
     };

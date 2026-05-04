@@ -99,6 +99,10 @@ const QuestionDefinition = (props) => {
     "Other",
   ];
 
+  const currentQuestionDefinitionId = useSelector(
+    (state) => state.evaluator.currentQuestionDefinitionId
+  );
+
   //  console.log({
   //     taskId,
   //     answerPdfId,
@@ -112,27 +116,129 @@ const QuestionDefinition = (props) => {
   // }, [allQuestions, currentQuestion]);
   // console.log(props.userTimerData);
 
+  // const handleSubmitConfirm = () => {
+  //   if (!props.allPagesVisited) {
+  //     toast.warning("Please view all pages before submitting");
+  //     return;
+  //   }
+
+  //   // ✅ NEW VALIDATION START
+  //   if (remark && (remark.type === "increase" || remark.type === "decrease")) {
+  //     const from = remark.range?.from;
+  //     const to = remark.range?.to;
+
+  //     // check valid range exists
+  //     if (from == null || to == null) {
+  //       toast.error("Invalid remark range");
+  //       return;
+  //     }
+
+  //     // check if ANY question marks fall in range
+  //     const isValid = allQuestions.some((q) => {
+  //       return q.allottedMarks >= from && q.allottedMarks <= to;
+  //     });
+
+  //     if (!isValid) {
+  //       toast.error(
+  //         `Marks must be between ${from} and ${to} for ${remark.type} remark`
+  //       );
+  //       return;
+  //     }
+  //   }
+
+  //   // ✅ ANNOTATION VALIDATION START
+
+  //   // extract annotation types
+  //   // const annotations = marksStore?.map((a) => a.type) || [];
+
+  //   const annotations =
+  //     annotationStore
+  //       ?.filter(
+  //         (a) => a.iconUrl === "/check1.png" || a.iconUrl === "/cross1.png"
+  //       )
+  //       .map((a) => a.iconUrl) || [];
+
+  //   const hasCheck = annotations.includes("/check1.png");
+  //   const hasCross = annotations.includes("/cross1.png");
+
+  //   // total marks
+  //   const totalObtained = allQuestions.reduce(
+  //     (sum, q) => sum + (q.allottedMarks || 0),
+  //     0
+  //   );
+
+  //   const totalMax = allQuestions.reduce(
+  //     (sum, q) => sum + (q.maxMarks || 0),
+  //     0
+  //   );
+
+  //   // ✅ Case 1 — FULL MARKS
+  //   if (totalObtained === totalMax) {
+  //     if (!hasCheck || hasCross) {
+  //       toast.error("Full marks allowed only when all annotations are ✔");
+  //       return;
+  //     }
+  //   }
+
+  //   // ✅ Case 2 — ZERO MARKS
+  //   if (totalObtained === 0) {
+  //     if (!hasCross || hasCheck) {
+  //       toast.error("Zero marks allowed only when all annotations are ❌");
+  //       return;
+  //     }
+  //   }
+
+  //   // ✅ Case 3 — PARTIAL MARKS
+  //   if (totalObtained > 0 && totalObtained < totalMax) {
+  //     if (!hasCheck || !hasCross) {
+  //       toast.error(
+  //         "Partial marks require at least one ✔ and one ❌ annotation"
+  //       );
+  //       return;
+  //     }
+  //   }
+
+  //   console.log("annotationStore:", annotationStore);
+
+  //   // ✅ ANNOTATION VALIDATION END
+  //   // ✅ NEW VALIDATION END
+
+  //   if (!socket) return;
+
+  //   const taskId = props.id;
+  //   const answerPdfId = props.answerPdfDetailsId._id;
+
+  //   socket.emit("get-marks-data", {
+  //     taskId,
+  //     answerPdfId,
+  //     userId: currentTaskDetails?.userId,
+  //   });
+
+  //   props.setsubmitModel(true);
+  // };
+
   const handleSubmitConfirm = () => {
+    // 🚫 BLOCK if all pages not visited
     if (!props.allPagesVisited) {
       toast.warning("Please view all pages before submitting");
       return;
     }
 
-    // ✅ NEW VALIDATION START
+    // ================================
+    // ✅ REMARK VALIDATION
+    // ================================
     if (remark && (remark.type === "increase" || remark.type === "decrease")) {
       const from = remark.range?.from;
       const to = remark.range?.to;
 
-      // check valid range exists
       if (from == null || to == null) {
         toast.error("Invalid remark range");
         return;
       }
 
-      // check if ANY question marks fall in range
-      const isValid = allQuestions.some((q) => {
-        return q.allottedMarks >= from && q.allottedMarks <= to;
-      });
+      const isValid = allQuestions.some(
+        (q) => q.allottedMarks >= from && q.allottedMarks <= to
+      );
 
       if (!isValid) {
         toast.error(
@@ -142,22 +248,52 @@ const QuestionDefinition = (props) => {
       }
     }
 
-    // ✅ ANNOTATION VALIDATION START
+    // ================================
+    // ✅ MARKS EXIST VALIDATION (NEW)
+    // ================================
 
-    // extract annotation types
-    // const annotations = marksStore?.map((a) => a.type) || [];
+    // Check if ANY question is untouched
+    const hasUnmarkedQuestion = allQuestions.some(
+      (q) => q.allottedMarks === null || q.allottedMarks === undefined
+    );
 
-    const annotations =
-      annotationStore
-        ?.filter(
-          (a) => a.iconUrl === "/check1.png" || a.iconUrl === "/cross1.png"
-        )
-        .map((a) => a.iconUrl) || [];
+    if (hasUnmarkedQuestion) {
+      toast.error("Please assign marks to all questions before submitting");
+      return;
+    }
+
+    // ================================
+    // ✅ ANNOTATION VALIDATION (FIXED)
+    // ================================
+
+    // 🔥 IMPORTANT: filter by current question
+    // const currentQuestionAnnotations = annotationStore.filter(
+    //   (a) =>
+    //     a.questionDefinitionId === currentQuestionDefinitionId &&
+    //     (a.iconUrl === "/check1.png" || a.iconUrl === "/cross1.png")
+    // );
+
+    const allRelevantAnnotations = annotationStore.filter(
+      (a) => a.iconUrl === "/check1.png" || a.iconUrl === "/cross1.png"
+    );
+
+    const annotations = allRelevantAnnotations.map((a) => a.iconUrl);
+
+    // 🛑 No annotations at all
+    if (annotations.length === 0) {
+      toast.error("Please add annotations before submitting");
+      return;
+    }
 
     const hasCheck = annotations.includes("/check1.png");
     const hasCross = annotations.includes("/cross1.png");
 
-    // total marks
+    const allCheck = annotations.every((a) => a === "/check1.png");
+    const allCross = annotations.every((a) => a === "/cross1.png");
+
+    // ================================
+    // ✅ MARKS CALCULATION
+    // ================================
     const totalObtained = allQuestions.reduce(
       (sum, q) => sum + (q.allottedMarks || 0),
       0
@@ -168,25 +304,25 @@ const QuestionDefinition = (props) => {
       0
     );
 
-    // ✅ Case 1 — FULL MARKS
-    if (totalObtained === totalMax) {
-      if (!hasCheck || hasCross) {
-        toast.error("Full marks allowed only when all annotations are ✔");
-        return;
-      }
+    // ================================
+    // ✅ VALIDATION RULES (FIXED)
+    // ================================
+
+    // ✅ FULL MARKS
+    if (totalObtained === totalMax && !allCheck) {
+      toast.error("Full marks allowed only when all annotations are ✔");
+      return;
     }
 
-    // ✅ Case 2 — ZERO MARKS
-    if (totalObtained === 0) {
-      if (!hasCross || hasCheck) {
-        toast.error("Zero marks allowed only when all annotations are ❌");
-        return;
-      }
+    // ✅ ZERO MARKS
+    if (totalObtained === 0 && !allCross) {
+      toast.error("Zero marks allowed only when all annotations are ❌");
+      return;
     }
 
-    // ✅ Case 3 — PARTIAL MARKS
+    // ✅ PARTIAL MARKS
     if (totalObtained > 0 && totalObtained < totalMax) {
-      if (!hasCheck || !hasCross) {
+      if (!(hasCheck && hasCross)) {
         toast.error(
           "Partial marks require at least one ✔ and one ❌ annotation"
         );
@@ -194,11 +330,15 @@ const QuestionDefinition = (props) => {
       }
     }
 
-    console.log("annotationStore:", annotationStore);
+    // ================================
+    // DEBUG (optional)
+    // ================================
+    // console.log("Filtered Question Annotations:", currentQuestionAnnotations);
+    console.log("All annotations in store:", annotationStore);
 
-    // ✅ ANNOTATION VALIDATION END
-    // ✅ NEW VALIDATION END
-
+    // ================================
+    // ✅ SOCKET CALL
+    // ================================
     if (!socket) return;
 
     const taskId = props.id;
@@ -724,6 +864,7 @@ const QuestionDefinition = (props) => {
       const response = await changeCurrentIndexById(taskId, nextIndex);
       // console.log(response);
       dispatch(setCurrentBookletIndex(response));
+      window.location.reload();
     } catch (error) {
       console.log(error);
       toast.error("Something went wrong");

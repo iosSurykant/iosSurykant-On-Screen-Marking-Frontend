@@ -93,31 +93,12 @@ const ReviewerQuestion = (props) => {
     console.log(props.confirmationData);
   }, [props.setsubmitModel, socket, props.submitModel]);
 
-  // const rejectionReasons = [
-  //   "Incorrect booklet uploaded",
-  //   "Pages missing or unreadable",
-  //   "Booklet not related to assigned task",
-  //   "Other",
-  // ];
-
-  //  console.log({
-  //     taskId,
-  //     answerPdfId,
-  //     userId: currentTaskDetails?.userId,
-  //   });
-  // useEffect(() => {
-  //   if (allQuestions.length !== 0) {
-  //     setCurrentQuestionDefinitionId(allQuestions[currentQuestion]._id);
-  //   }
-  //   console.log(allQuestions[currentQuestion]._id);
-  // }, [allQuestions, currentQuestion]);
-  // console.log(props.userTimerData);
-
   const goToNextBookletOrFinish = async () => {
     try {
-      const isLastBooklet =
-        Number(taskDetails.currentFileIndex) >=
-        Number(taskDetails.totalBooklets);
+      const currentIndex = Number(taskDetails.currentFileIndex);
+      const total = Number(taskDetails.totalBooklets);
+
+      const isLastBooklet = currentIndex === total;
 
       // ✅ If last booklet → task complete
       if (isLastBooklet) {
@@ -127,8 +108,8 @@ const ReviewerQuestion = (props) => {
       }
 
       // ✅ Otherwise move to next booklet
-      const nextIndex = Number(taskDetails.currentFileIndex) + 1;
-      const res = handleIndexChange(taskDetails._id, nextIndex);
+      const nextIndex = Number(taskDetails.currentFileIndex);
+      await handleIndexChange(taskDetails._id, nextIndex);
       // const response = await changeCurrentIndexById(taskDetails._id, nextIndex);
 
       dispatch(setCurrentBookletIndex(nextIndex));
@@ -658,70 +639,6 @@ const ReviewerQuestion = (props) => {
     }
   };
 
-  // const rollback = async () => {
-  //   console.log("ROLLBACK CLICKED");
-
-  //   if (!selectedUser) {
-  //     console.log("No user selected");
-  //     return;
-  //   }
-
-  //   const obj = {
-  //     assignments: [
-  //       {
-  //         evaluatorId: selectedUser,
-  //         reviewerId: props.taskdetails.userId,
-  //         subjectCode: props.taskdetails.subjectCode,
-  //         questiondefinitionId: props.taskdetails.questiondefinitionId,
-  //         bookletsToAssign: [currentBookletId],
-  //       },
-  //     ],
-  //   };
-
-  //   console.log("Payload:", obj);
-
-  //   try {
-  //     const response = await axios.post(
-  //       `${process.env.REACT_APP_API_URL}/api/tasks/assign/reviewer-rollback`,
-  //       obj,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     console.log("API success:", response.data);
-  //   } catch (error) {
-  //     console.log("API error:", error?.response?.data || error.message);
-  //   }
-  // };
-
-  //   const goToNextBookletOrFinish = async () => {
-  //     try {
-  //      const isLastBooklet =
-  //         Number(taskDetails.currentFileIndex) >=
-  //         Number(taskDetails.totalBooklets);
-
-  //      // ✅ If last booklet → task complete
-  //      if (isLastBooklet) {
-  //         toast.success("All booklets processed. Task completed.");
-  //         navigate("/reviewer/assignedtasks");
-  //         return;
-  //      }
-
-  //      // ✅ Otherwise move to next booklet
-  //      const nextIndex = Number(taskDetails.currentFileIndex) + 1;
-  //      const response = await changeCurrentIndexById(taskDetails._id, nextIndex);
-
-  //      dispatch(setCurrentBookletIndex(response));
-  //      toast.success("Moved to next booklet");
-  //     } catch (error) {
-  //      console.error(error);
-  //      toast.error("Failed to load next booklet");
-  //     }
-  // };
-
   const submitHandler = async () => {
     try {
       // remainingSecondsRef = seconds left
@@ -930,6 +847,15 @@ const ReviewerQuestion = (props) => {
       toast.success("Sent back to evaluator with remark");
 
       setshowRollbackModel(false);
+
+      // ✅ NEW: adjust index safely after rollback
+      const currentIndex = Number(taskDetails.currentFileIndex);
+      const total = Number(taskDetails.totalBooklets);
+
+      // if rollback removed current booklet, prevent skipping last
+      if (currentIndex === total) {
+        await handleIndexChange(taskDetails._id, currentIndex);
+      }
       await goToNextBookletOrFinish();
       window.location.reload();
     } catch (err) {
